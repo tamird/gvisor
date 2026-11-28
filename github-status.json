@@ -871,6 +871,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "17197905852cdebf53a1f60b9de9652ced640e7c",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "9e17fdee10b5d7cde68732dbe86e823fdb34fe48"
+            },
+            "submittedAt": "2026-10-24T07:09:23Z"
+          }
+        ]
       }
     },
     {
@@ -2813,6 +2829,11 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABNz31mM8AAAAIWfaH9g"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "698999a443ac6d2b1a564292b78020da109a4cad",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -3775,6 +3796,32 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "fe7a0f8e0b2e9201849722166041682662e0d21e",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "fe7a0f8e0b2e9201849722166041682662e0d21e"
+            },
+            "submittedAt": "2026-11-08T15:58:50Z"
+          },
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "a306517c61094f024f927a94fbf44d9e5d410f90"
+            },
+            "submittedAt": "2026-10-13T00:52:53Z"
+          }
+        ]
       }
     },
     {
@@ -6824,6 +6871,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d5d4d36bb4ff63e5750adf5a1306ffa7586ff754",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -13230,6 +13282,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "2b096ecc6cbe58cb80521653e28c60bf8fee3661",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -13817,6 +13874,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ed8a800c0c2d10916616ad2e0a791976fbd60274",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -20049,6 +20111,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "acf93596eddca6ca31f652d75b207a8da544ff54",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -22651,6 +22718,32 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "afb6198869d091f721f559dc0e2eceb0c6bb5455",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "afb6198869d091f721f559dc0e2eceb0c6bb5455"
+            },
+            "submittedAt": "2026-11-20T00:30:30Z"
+          },
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "afb6198869d091f721f559dc0e2eceb0c6bb5455"
+            },
+            "submittedAt": "2026-11-13T20:32:53Z"
+          }
+        ]
       }
     },
     {
@@ -24700,6 +24793,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e43144b9c14879ea75fb6e7a0221da20d55698cf",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "6163d92a567f0983df38f57ec2596adc917ae78a"
+            },
+            "submittedAt": "2026-10-03T07:24:40Z"
+          }
+        ]
       }
     },
     {
@@ -31795,6 +31904,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f015ceacdfa15a9137fab8f24e261218d16c634f",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "a9429cd833940fd776a4c44e792e322069b7bc6f"
+            },
+            "submittedAt": "2026-10-03T07:23:09Z"
+          }
+        ]
       }
     },
     {
@@ -32649,6 +32774,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d279425e0defee09168de15f54f82b63f1e2a8a9",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "c5e943bc48ce63b12fc67b826919b872ebd01a55"
+            },
+            "submittedAt": "2026-10-03T07:17:45Z"
+          }
+        ]
       }
     },
     {
@@ -45415,6 +45556,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f84b27e5f16607463fa034034acf84ff867438be",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -48535,6 +48681,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "40d658b147fd3ab5d10a0d37c4a5fd56c121f3fe",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -57520,6 +57671,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "75bfe160127ff01c8c7394bb4984527077ed8bf2",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "konstantin-s-bogom"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "75bfe160127ff01c8c7394bb4984527077ed8bf2"
+            },
+            "submittedAt": "2026-11-10T18:24:20Z"
+          }
+        ]
       }
     },
     {
@@ -57841,6 +58008,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "19ed01e640aab0d5020177949bf5958bb008534b",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -63029,6 +63201,11 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABVZQ7Ns8AAAAIbtZb2Q"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "459e7ad8fa5534c2c7be4f4a6f3f2b492e29b827",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -63287,6 +63464,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5b4f8097b06a9f9d68150eb6a02a91ff757cd7f3",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -71434,6 +71616,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -76644,6 +76831,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "803c35f44f35bad6b32668783e9a0b4e44a513e9",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -78442,6 +78634,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a78af8fa3c443b0242685dd17935912c6f7ddb4a",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "manninglucas"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "a78af8fa3c443b0242685dd17935912c6f7ddb4a"
+            },
+            "submittedAt": "2026-11-23T20:32:44Z"
+          }
+        ]
       }
     },
     {
@@ -104382,6 +104590,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f11f74a174170eedf4b158ef111937c4533d4abe",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -108255,6 +108468,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e1e2d03562b5215e8815237efb607627fe2c6033",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -110290,6 +110508,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d531ad7020c188a6c93e3dd2e339bade982b21dd",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -112781,6 +113004,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "8bdfa6d8877646ece6ed528d463054c08a5c82f3",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -117078,6 +117306,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "58fb6b08096d65974497d16c020b3f8a0cd955a8",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "nybidari"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "58fb6b08096d65974497d16c020b3f8a0cd955a8"
+            },
+            "submittedAt": "2026-11-13T04:51:22Z"
+          }
+        ]
       }
     },
     {
@@ -153780,6 +154024,22 @@
       },
       "inspectedReviewHeads": {
         "PRRC_kwDOB9IlXs8AAAABC7ZdxQ": "a6a26052fcf59e25cb748093fb5017932c088c80"
+      },
+      "reviewOpinions": {
+        "head": "1f277200f591d460fd51232a799a7fc5e1f8511c",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "manninglucas"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "1f277200f591d460fd51232a799a7fc5e1f8511c"
+            },
+            "submittedAt": "2026-11-16T19:08:30Z"
+          }
+        ]
       }
     },
     {
@@ -168880,6 +169140,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "63bcfa2ad44882db0ecd5afab16df8c5e285e485",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "bc40a65c7d06164a2a6f941fbe86dd409699258d"
+            },
+            "submittedAt": "2026-10-24T07:01:11Z"
+          }
+        ]
       }
     },
     {
@@ -170016,6 +170292,11 @@
       },
       "inspectedReviewHeads": {
         "IC_kwDOB9IlXs8AAAABjpFyMw": "1b9768b199524246fe8e4fa66a0b623069778780"
+      },
+      "reviewOpinions": {
+        "head": "1b9768b199524246fe8e4fa66a0b623069778780",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -173147,6 +173428,11 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABY1hA_M8AAAAH-ENxng"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a65d7ad577fae532bd88cbcbbaf1182c9f35e534",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -174588,6 +174874,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "58ee25232e6f1a1f616b20774c679359caa1765e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -186111,6 +186402,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e794622247027309e4f983d2e9426c5d944159ae",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -187125,6 +187421,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5e40fd8b200774c0db4f52d9421ce36d7d6167dd",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -203337,6 +203638,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5e698c792946dffce33eeebe4883958fd2323b2c",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -206119,6 +206425,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6f995f57e427b642ab3463f48b3c56b3d01e867f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -208755,6 +209066,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e833a4cc951871ebcd3a4edee3f801851db7b0c3",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "e833a4cc951871ebcd3a4edee3f801851db7b0c3"
+            },
+            "submittedAt": "2026-10-29T17:51:34Z"
+          }
+        ]
       }
     },
     {
@@ -212469,6 +212796,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0ae405ec7d1ace5894645c28910c69605c0de20e",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "manninglucas"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "d13561b12b7015924636f58b701705a98bee68e5"
+            },
+            "submittedAt": "2026-10-26T18:47:19Z"
+          }
+        ]
       }
     },
     {
@@ -214811,6 +215154,22 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABaJc_I88AAAAIWfYvzQ"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "konstantin-s-bogom"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "f9f6e3261d13800cb3bdbdaf713d44fc142811ac"
+            },
+            "submittedAt": "2026-11-24T21:50:29Z"
+          }
+        ]
       }
     },
     {
@@ -217670,6 +218029,11 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABaJi7x88AAAAIFvFibg"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ce539633fa36f5f73f9e85a1cdc907be23ef1be5",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -219733,6 +220097,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "63d3761ddffe329a13d142d91dd61cceeec76fcd"
+            },
+            "submittedAt": "2026-10-27T01:09:53Z"
+          }
+        ]
       }
     },
     {
@@ -229200,6 +229580,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "cbe9181a465bf9a2db17a9494ee9ad7792977f93",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -234324,6 +234709,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c71526cea11bd81898c588264c0940d1fb33e511",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "c71526cea11bd81898c588264c0940d1fb33e511"
+            },
+            "submittedAt": "2026-11-19T03:13:46Z"
+          }
+        ]
       }
     },
     {
@@ -238977,6 +239378,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c125b0e272ddb337b4c78588c79a86b2f5e228b6",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "8585cf9fc70d84fa7cc92d9a4fbb799f1b0f17ce"
+            },
+            "submittedAt": "2026-11-24T01:43:15Z"
+          }
+        ]
       }
     },
     {
@@ -244467,6 +244884,11 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "4ffc7923f64734cacfb01319dda3965432413f5a",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -246008,6 +246430,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f4791f772f73f7d02332d20aaef2f40aa9177c97",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -246354,6 +246781,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "695aca183de5b9c736a8f1bb7a2a80b65f894c1c",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "695aca183de5b9c736a8f1bb7a2a80b65f894c1c"
+            },
+            "submittedAt": "2026-11-14T17:16:37Z"
+          }
+        ]
       }
     },
     {
@@ -249794,6 +250237,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "manninglucas"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca"
+            },
+            "submittedAt": "2026-11-05T19:34:23Z"
+          }
+        ]
       }
     },
     {
@@ -252859,6 +253318,11 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABan9YK88AAAAIbk02QA"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ebd4fe7f691f7903c0efaeab5f0113958b4193e3",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -255885,6 +256349,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "af4dd4713ab43bede9df4bff071a94cd65c1b939",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -256931,6 +257400,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "7cc5ad9efdff3d4cfaa12eca45ea9156bd57492a"
+            },
+            "submittedAt": "2026-11-14T17:17:30Z"
+          }
+        ]
       }
     },
     {
@@ -258313,6 +258798,32 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b214855fa038fd770d1dc3e3a3984ba922282104",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "riverafernando"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "b214855fa038fd770d1dc3e3a3984ba922282104"
+            },
+            "submittedAt": "2026-11-24T21:52:23Z"
+          },
+          {
+            "author": {
+              "login": "manninglucas"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "b214855fa038fd770d1dc3e3a3984ba922282104"
+            },
+            "submittedAt": "2026-11-09T19:36:48Z"
+          }
+        ]
       }
     },
     {
@@ -264184,6 +264695,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "2c1ea17a6be7c217a0bc8c52631ee0e2fd7539fc",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -264437,6 +264953,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f2c269fc3e693e9a6c06d6478f8352270bd7d920",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -265564,6 +266085,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "651437132bf0054f1742ab2dce694f28a9ee0dc4",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "milantracy"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "1dac5af96591bcb90e7d210b6edf3eaa365aa299"
+            },
+            "submittedAt": "2026-11-11T06:32:24Z"
+          }
+        ]
       }
     },
     {
@@ -265843,6 +266380,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c2b841cf88b8c8ae4c226e7c4c4a22493ace9d19",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -267354,6 +267896,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "718e0616e8fb5295b88691f7d2a9171bd4a2c9df",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -269962,6 +270509,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "79eed78a33e4f06a46cafd33987969e9819d7505",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -275277,6 +275829,11 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ddc89a6409fde68c70efbd19d8130806db9cafa4",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -276749,6 +277306,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "22d2c423892dcb9864dd36b16508abc9beaf63ab",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -279708,6 +280270,32 @@
       "inspectedReviewHeads": {
         "PRRC_kwDOB9IlXs8AAAABCmNvZg": "71b5044a65ffac66a4d41cd289788d7b9ad5ea22",
         "PRRC_kwDOB9IlXs8AAAABCmNvfw": "71b5044a65ffac66a4d41cd289788d7b9ad5ea22"
+      },
+      "reviewOpinions": {
+        "head": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "milantracy"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "5068ecb10e0ca383cc00791cc4a655b7a90a626f"
+            },
+            "submittedAt": "2026-11-01T21:58:28Z"
+          },
+          {
+            "author": {
+              "login": "konstantin-s-bogom"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "9d3e6518a0a467c6575390cb6a61ff134024d243"
+            },
+            "submittedAt": "2026-10-30T23:22:39Z"
+          }
+        ]
       }
     },
     {
@@ -281922,6 +282510,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "cd04fef8fe3cb87a1889347a2902959291dd6824",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -283852,6 +284445,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c7aee950fd7b714652f8122c1b0ff4c52406bb0e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -288920,6 +289518,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a830f264b812f9f166cc50fe97a24f24db378b34",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -289206,6 +289809,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "541f3ffcd0c32636d2b9845770fd968ba0205ee9",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -290311,6 +290919,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0cba97076a190364b6d941135b167263f01f74ba",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "carzh"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "0cba97076a190364b6d941135b167263f01f74ba"
+            },
+            "submittedAt": "2026-11-04T18:04:38Z"
+          }
+        ]
       }
     },
     {
@@ -290607,6 +291231,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e96ff96ae1a6ce918ad5a96bed529ae63cd30d1b",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -291036,6 +291665,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "9979fae516482553fd5042632a9ca2878ef9830e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -291632,6 +292266,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "16b2a7431d7009ab45f4d281a7616492c2a53595",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -291885,6 +292524,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d09c871fc1d40cdc74317a58fbf3eb6927b3b038",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -292976,6 +293620,11 @@
       },
       "inspectedReviewHeads": {
         "PRRC_kwDOB9IlXs8AAAABCfrlUA": "8f7a1936f76cfcdf91ca815a4349471a80f3ded5"
+      },
+      "reviewOpinions": {
+        "head": "856ba0e2a119657f32d7393835fcccdc56361bb2",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -296143,6 +296792,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f2ef9106d68c1fb53f3a43f92c2e762613aacc89",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -296881,6 +297535,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d6deb3c8b96837af609b38a557590162bbbd979e",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "manninglucas"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "d6deb3c8b96837af609b38a557590162bbbd979e"
+            },
+            "submittedAt": "2026-11-03T19:24:10Z"
+          }
+        ]
       }
     },
     {
@@ -297590,6 +298260,11 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABb4w5Y88AAAAIYi7ynQ"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c4ba49a4cca1db20a8914c2f2ea29c3b94b615ed",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -300109,6 +300784,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5805a2c4275f8bfae84665d5dedb6aa90d870e64",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -307172,6 +307852,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a3aadfeb432f66fc5984778bba84c8f5ce7edb99",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "kerumeto"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2"
+            },
+            "submittedAt": "2026-11-10T22:47:20Z"
+          }
+        ]
       }
     },
     {
@@ -308536,6 +309232,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "9b9d9e39f0999c963abed74dbcac045e8b40e588",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -308933,6 +309634,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a97c0844e84c3faba95d7f880d548046160b323e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -310098,6 +310804,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "3582b3adc64b9bd5dda6f2fa72bb18494a26f9bb",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "3582b3adc64b9bd5dda6f2fa72bb18494a26f9bb"
+            },
+            "submittedAt": "2026-11-10T03:29:23Z"
+          }
+        ]
       }
     },
     {
@@ -311135,6 +311857,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "9f221b2d25df7dcc0e2cabc11aa84d35b911109c",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -313727,6 +314454,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "1fa9c7ace8845c603b6c5cfa19960e3b68f670eb",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -313978,6 +314710,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a85528dd1a58ea2212e68a9ea651b63e266009b8",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -314254,6 +314991,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "232fe5d560fbc8daa12eed66ab184c1ddf42d5ad",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -314629,6 +315371,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "shayonj"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "62adc7d9cf16a0805efad38bedcf6d516d1b2ec0"
+            },
+            "submittedAt": "2026-11-26T13:00:35Z"
+          }
+        ]
       }
     },
     {
@@ -314965,6 +315723,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "bec09fb06c6ca5924a5001dca1cb43be2ea71e26",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "3f09760978f08d3dfba28a63885c0533f2b03a02"
+            },
+            "submittedAt": "2026-11-10T03:41:16Z"
+          }
+        ]
       }
     },
     {
@@ -315243,6 +316017,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5c3efce63c6224e8f8cc02953fb1d1a6883c4f7f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -315492,6 +316271,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "9db87a5d7eebdc69926b4cb14c97e1071c504925",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -316378,6 +317162,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "daa2d24389d1fea28197add328e4e875488c306d",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "kerumeto"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "daa2d24389d1fea28197add328e4e875488c306d"
+            },
+            "submittedAt": "2026-11-10T18:47:22Z"
+          }
+        ]
       }
     },
     {
@@ -317104,6 +317904,22 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABb8m7288AAAAIbtY5Vw"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "91b4fc2a2b3fe4a64a4d2769f982b6b381ec83d0"
+            },
+            "submittedAt": "2026-11-21T09:40:49Z"
+          }
+        ]
       }
     },
     {
@@ -317353,6 +318169,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "296133edf1ddc046c06785c44596de2a4a93ee76",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -317632,6 +318453,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "9c85f86ad92e5e745849ae532ee4c572cacfbe83",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -321522,6 +322348,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c4934d7dd521ebfbff70dd9aae69df69ac2c9a01",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -322510,6 +323341,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f0e414b08b89f9486132955578fcb8d55346d33c",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "konstantin-s-bogom"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "f0e414b08b89f9486132955578fcb8d55346d33c"
+            },
+            "submittedAt": "2026-11-10T18:23:40Z"
+          }
+        ]
       }
     },
     {
@@ -328098,6 +328945,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "769b2b78d0f9b039422377de2c18d8b64eb4f26b",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -329102,6 +329954,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f622e260274112d80475ebb59d07b5d5ac24df86",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -329380,6 +330237,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e799704132c10b4cd5822cbcb8dd45d055976558",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -331754,6 +332616,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "7c55bad5bb6d5db5cd84c315746e0c5bb080506d",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -332020,6 +332887,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "caf171bbc9fd32876201d73523bcb9d3482e5d68",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -332338,6 +333210,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "24959d472baf3aa7405ac1d3d3b88e47af8f7f76",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -332822,6 +333699,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "4162e5c47a836f10c20292c32878b2c14d6f03f8",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -333084,6 +333966,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a158f02b7f62e87e4feb84271aeda7192cbb1a12",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -336602,6 +337489,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "325b60e07110413fab43b57797b410e16f53a8f0",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -336891,6 +337783,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d4c657f845c987d9f7b6724fadd500dafaee6bd0",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -337177,6 +338074,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "7cc517cf12c1e38e8e09a3a2149c51b538af8d9e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -337453,6 +338355,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "dc69062cc3eabdd62732cdabbdf5fcd43dcdc60e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -337716,6 +338623,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "1ce76f5ffc1f32e82846bd90cce2eac141bf6c55",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -338155,6 +339067,11 @@
       "inspectedReviewHeads": {
         "PRRC_kwDOB9IlXs8AAAABCtcqfA": "fb98ff4ca16818deea71b420bef46b956c4b258f",
         "PRRC_kwDOB9IlXs8AAAABCtcrRQ": "fb98ff4ca16818deea71b420bef46b956c4b258f"
+      },
+      "reviewOpinions": {
+        "head": "c8cbd3e8f8d18e7bfc66ecfeb7ee733091e4640f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -341075,6 +341992,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "299a4bf8f489b96c7d148e1fa9f2d7c7171925d4",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -344405,6 +345327,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3"
+            },
+            "submittedAt": "2026-11-25T20:05:23Z"
+          }
+        ]
       }
     },
     {
@@ -344668,6 +345606,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "74900002076f44ba4d88ad2a55bbd07275aaaa38",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -348690,6 +349633,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "8e2942f72d8417a035953369bd1c9930a80dfd83",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -349712,6 +350660,22 @@
       "inspectedReviewHeads": {
         "IC_kwDOB9IlXs8AAAABjR7INw": "d0439e8b83fafeff675910fc544a393fb5d9f85c",
         "PRRC_kwDOB9IlXs8AAAABC60XAQ": "c02d0940fd57e7c31432c81164f3e58f41795286"
+      },
+      "reviewOpinions": {
+        "head": "881bcc233a023ac188d0c3dd8d8d4f3770b7e3f3",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "kerumeto"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "c890e891f753f5cb51f8c23a63e7342ae670a7aa"
+            },
+            "submittedAt": "2026-11-23T18:49:52Z"
+          }
+        ]
       }
     },
     {
@@ -350127,6 +351091,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0c5467e9885911fcb07b221ef59f97ee62844faa",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -350718,6 +351687,11 @@
       "inspectedReviewHeads": {
         "PRRC_kwDOB9IlXs8AAAABDksLSA": "fdb50904483cd093a14c7d4ed3bbbf645222dab1",
         "PRRC_kwDOB9IlXs8AAAABDw2TJw": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e"
+      },
+      "reviewOpinions": {
+        "head": "53cc614c1cb28bd0a34a2cf6f0d504f3d28ac72e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -351248,6 +352222,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e17281fec8dea3f23e6c3a573f12943a72c0e21f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -353032,6 +354011,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ff70bb3ca122e9a4aa0f94b7b2979d0a0607cc0f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -354131,6 +355115,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b62bcef3f46b72f004795eff5bfd5503a860c94c",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -354383,6 +355372,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0d76d304564e0701023a0274f9419e4d6bdba585",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -354634,6 +355628,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f4198eec1c968fd4cd7a2ee06af4e6fa870a9308",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -354891,6 +355890,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6cf24e63040edc784a04ccc845636b30203f5246",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -356289,6 +357293,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0449e8a37bba3dfdc846b847371c2e93ffa9577e",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "0449e8a37bba3dfdc846b847371c2e93ffa9577e"
+            },
+            "submittedAt": "2026-11-09T05:00:02Z"
+          }
+        ]
       }
     },
     {
@@ -359065,6 +360085,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "rexren-gif"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "a3ca22afef84e3fb9f693c2bfb98d1218bb8c59a"
+            },
+            "submittedAt": "2026-11-20T00:51:19Z"
+          }
+        ]
       }
     },
     {
@@ -362012,6 +363048,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "aa175bd84686b4585c413e2fabb36f1457cd52db",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "aa175bd84686b4585c413e2fabb36f1457cd52db"
+            },
+            "submittedAt": "2026-11-23T00:34:17Z"
+          }
+        ]
       }
     },
     {
@@ -362754,6 +363806,22 @@
           "eventId": "UNLE_lADOB9IlXs8AAAABc90wWs8AAAAIWql6PQ"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c6e997dc3e578eaf9bec750def34dacf6c3d3f60",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "aaltinaydev"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "c6e997dc3e578eaf9bec750def34dacf6c3d3f60"
+            },
+            "submittedAt": "2026-11-17T16:18:22Z"
+          }
+        ]
       }
     },
     {
@@ -363868,6 +364936,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "shailend-g"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "6bd31cd09cc922fb7235267e95c0d951ad1f43c8"
+            },
+            "submittedAt": "2026-11-20T19:36:45Z"
+          }
+        ]
       }
     },
     {
@@ -364187,6 +365271,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "riverafernando"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "ef6f0e2f8c9cd1ca1b2b277261f68ef5509d225e"
+            },
+            "submittedAt": "2026-11-23T23:39:32Z"
+          }
+        ]
       }
     },
     {
@@ -364452,6 +365552,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "31cd82bc4c2163ef7b914c8848208cdf9472f432",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -365502,6 +366607,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c02a41fed60887d1308f63f51b35f3054c519751",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -366887,6 +367997,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6f4000d8646a9e7b5d7f11d22856d445184c3da4",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -367142,6 +368257,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "690adff724674719991f63142fe0ba5e07c6bc62",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -369089,6 +370209,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "7d87f0fda8c391bc35e1a040d3b8786eae6adef3",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -370081,6 +371206,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "52ff87dadb907e5facdee03b9ec746f1806a19e2",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -370332,6 +371462,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "015e1d9e783219bb253df4184d89b981d9208bba",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -370631,6 +371766,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "32fd9c26abba8ceb7d68c6aacfd565bda81f839a",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -372868,6 +374008,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "db1540f20d049d2ce83350a8b11e1d134fcc7571",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "db1540f20d049d2ce83350a8b11e1d134fcc7571"
+            },
+            "submittedAt": "2026-11-09T04:18:21Z"
+          }
+        ]
       }
     },
     {
@@ -373120,6 +374276,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d24c65521cdb5fdd2faea93658b12f5199e23f82",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -373809,6 +374970,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "befeb49f0a05f9a5ae8c06882f1b0dc95f39b654",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "rexren-gif"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "befeb49f0a05f9a5ae8c06882f1b0dc95f39b654"
+            },
+            "submittedAt": "2026-11-12T23:46:37Z"
+          }
+        ]
       }
     },
     {
@@ -374641,6 +375818,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "1a322dca25c58e1f3088921133c346b77f2246e0",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "relkochta"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "1a322dca25c58e1f3088921133c346b77f2246e0"
+            },
+            "submittedAt": "2026-11-09T22:41:03Z"
+          }
+        ]
       }
     },
     {
@@ -378375,6 +379568,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "3bf47015069ff0e331d4caaeb0a64b1716d946c8",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -379745,6 +380943,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6b284764d34e331bed438bb8ff7ce953be147420",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -380010,6 +381213,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f12d97ddb4508b3c8da215d853cdba009041dbfd",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -380275,6 +381483,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "37a6d15f5e290a3db8e7228bbc2335a5bbe19c43",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -380525,6 +381738,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e15b225fd39ffc19d5db273eb2c63686cc37890c",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -380854,6 +382072,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "440aba98a0f5249ef2fd746a5cf47fafd560b6f3",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -384151,6 +385374,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "rexren-gif"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "cba5d1b3f0a94c5ac55c10fc8f29af4fd8d6978e"
+            },
+            "submittedAt": "2026-11-10T23:13:32Z"
+          }
+        ]
       }
     },
     {
@@ -385964,6 +387203,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "4a4a9ec725747e9e9893691fb3a6f1b43608a8cc",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -386213,6 +387457,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "273ea1c621aeb191c05ebf4d1e35559e8eeff84f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -387245,6 +388494,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f3d4a108ec7db1187082e2f19ed78e69cccac968",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -387495,6 +388749,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "fbc577fbbefcefe721929185f87d211384434939",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -387744,6 +389003,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c48c19e526c11707ce506e5679e4474683fdbf35",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -388036,6 +389300,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0625ac6d9ebf84c45743f244403941eafeeaa88a",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "0625ac6d9ebf84c45743f244403941eafeeaa88a"
+            },
+            "submittedAt": "2026-11-09T05:35:33Z"
+          }
+        ]
       }
     },
     {
@@ -388353,6 +389633,32 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "560b1f250c3775b1997ef31065e30043dadf3ea4",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "560b1f250c3775b1997ef31065e30043dadf3ea4"
+            },
+            "submittedAt": "2026-11-09T05:35:04Z"
+          },
+          {
+            "author": {
+              "login": "aaltinaydev"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "560b1f250c3775b1997ef31065e30043dadf3ea4"
+            },
+            "submittedAt": "2026-11-17T17:00:24Z"
+          }
+        ]
       }
     },
     {
@@ -388653,6 +389959,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "62fcd9150dab868889a3ca19af1144b62a75b688",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "62fcd9150dab868889a3ca19af1144b62a75b688"
+            },
+            "submittedAt": "2026-11-09T05:34:29Z"
+          }
+        ]
       }
     },
     {
@@ -388906,6 +390228,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "4cd3b2f10341ae776ed5a9d6f9f72391b321c3d2",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -390789,6 +392116,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "76d534aa035bc55dd9570a084fde009ef0c77a09",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "76d534aa035bc55dd9570a084fde009ef0c77a09"
+            },
+            "submittedAt": "2026-11-09T05:41:51Z"
+          }
+        ]
       }
     },
     {
@@ -391090,6 +392433,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b2bd2fd55badd184c83835883d14e26e38af499c",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "b2bd2fd55badd184c83835883d14e26e38af499c"
+            },
+            "submittedAt": "2026-11-09T05:43:16Z"
+          }
+        ]
       }
     },
     {
@@ -391371,6 +392730,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "693cb4def2a600e7e88ff050a8e3bc2861dc8e81",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "693cb4def2a600e7e88ff050a8e3bc2861dc8e81"
+            },
+            "submittedAt": "2026-11-09T05:42:58Z"
+          }
+        ]
       }
     },
     {
@@ -392410,6 +393785,11 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "7bf0d7d679f793fb12913c9e9f7aaa5f1d14a77c",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -393179,6 +394559,11 @@
       "inspectedReviewHeads": {
         "PRRC_kwDOB9IlXs8AAAABDS9ztw": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a",
         "PRRC_kwDOB9IlXs8AAAABDS91eg": "0aa0a1abf8a6586ae534f80a683f76aceb35d74a"
+      },
+      "reviewOpinions": {
+        "head": "22401767ad9317e22aaebb118d3f0dafd031d6a1",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -393517,6 +394902,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6bbb910969fb2d87e1333c1df4e937f8545563a1",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "6bbb910969fb2d87e1333c1df4e937f8545563a1"
+            },
+            "submittedAt": "2026-11-23T01:59:54Z"
+          }
+        ]
       }
     },
     {
@@ -393731,6 +395132,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "06c65e43b4e285b260898a3273901f7a4847fda9",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -393946,6 +395352,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "44adc0dc3974d463e919bd2e01c25ab64e6d0b56",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -394159,6 +395570,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "81cb24649b2eea459d219bd0a21d3c5a4d94ccfd",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -394374,6 +395790,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ac4710e491fe2aeb7c0b47ee992dfcba2785c638",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -394631,6 +396052,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e0cc4964a9b942dc28902ff08ed041b2608a8760",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -394847,6 +396273,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "055310233c2c7bd63adac8d143578afdcd1ca79e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -395066,6 +396497,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "76e84b771b989025ceebcf845eed6b6179e9c5cb",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -395281,6 +396717,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "bc6a8e7f4486682a83239b342cc5af68add0ac03",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -395502,6 +396943,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f069808da1b9876130c7a853fe2fbb9f815d8519",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -396193,6 +397639,32 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365"
+            },
+            "submittedAt": "2026-11-09T23:05:31Z"
+          },
+          {
+            "author": {
+              "login": "relkochta"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "28ed2e5fb8e4dac646cc64d5d9d1e446545f6365"
+            },
+            "submittedAt": "2026-11-09T19:21:52Z"
+          }
+        ]
       }
     },
     {
@@ -396406,6 +397878,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e27dd41fd170c5470dbef219681cdd82f12257f0",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -396661,6 +398138,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0773771fc2737fd561bf1f1e7f3bdf0ac6ca56ad",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -398032,6 +399514,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6c75b05f858acb7f960afa695989e8bc45f27a4f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -398281,6 +399768,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b7edb78d431c91ca2c5b9ba4672cd5252f1e94d4",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -398546,6 +400038,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "18bb03d811c9dd9be10edf1cc42909ba48cea58b",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -399367,6 +400864,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0cc542e1feffe9f26b4d3657511be4e7b79fb11d",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "0cc542e1feffe9f26b4d3657511be4e7b79fb11d"
+            },
+            "submittedAt": "2026-11-10T00:36:32Z"
+          }
+        ]
       }
     },
     {
@@ -399752,6 +401265,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b0e88411895eb181c0a3cfd1e68a29fd24d2fda1",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -401905,6 +403423,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "2d6152c49f83adeb403d4f66131a0fa11247db7a",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -402707,6 +404230,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "manninglucas"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "e6bba3d9b6b7c2792d2e9b1b2f640f64fc9e6fc0"
+            },
+            "submittedAt": "2026-11-10T23:29:18Z"
+          }
+        ]
       }
     },
     {
@@ -403085,6 +404624,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "68390a19836c84dd13b153e313a4a4508875efa2",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -403452,6 +404996,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "7f28ffee3fae1a3c5e5fffecd865817d20fdcdc6"
+            },
+            "submittedAt": "2026-11-25T21:59:40Z"
+          }
+        ]
       }
     },
     {
@@ -404119,6 +405679,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e9b31eddd7345586a03db99ec501ff4f2a5cc887",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "milantracy"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "e9b31eddd7345586a03db99ec501ff4f2a5cc887"
+            },
+            "submittedAt": "2026-11-11T06:18:35Z"
+          }
+        ]
       }
     },
     {
@@ -404869,6 +406445,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d461541e18fbb43999c7656ebddb85ecdb0b6a2f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -405226,6 +406807,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b57013d8abd255b013ab99c924139853eb3b3e7a",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "b57013d8abd255b013ab99c924139853eb3b3e7a"
+            },
+            "submittedAt": "2026-11-25T21:58:54Z"
+          }
+        ]
       }
     },
     {
@@ -406287,6 +407884,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "8cab980c14e1011e7855955944adc66b1b2554c4",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -406567,6 +408169,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f20fd589275a6a8bbb60110e4858b5c7159b4893",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -406833,6 +408440,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5345bc627b536734673f82ce4d065725afd6f085",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -407177,6 +408789,32 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "24841003c42c262436c161885db756eef1496a40",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "shayonj"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "24841003c42c262436c161885db756eef1496a40"
+            },
+            "submittedAt": "2026-11-25T21:23:18Z"
+          },
+          {
+            "author": {
+              "login": "rexren-gif"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "24841003c42c262436c161885db756eef1496a40"
+            },
+            "submittedAt": "2026-11-18T18:24:25Z"
+          }
+        ]
       }
     },
     {
@@ -407562,6 +409200,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ad7b865833d3c68da3a36aa010a167a7a18bbf42",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "shailend-g"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "ad7b865833d3c68da3a36aa010a167a7a18bbf42"
+            },
+            "submittedAt": "2026-11-26T00:46:07Z"
+          }
+        ]
       }
     },
     {
@@ -408315,6 +409969,22 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "94c7a5be59a53b5bb8dd4221a12b51e60fca2409",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "aaltinaydev"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "94c7a5be59a53b5bb8dd4221a12b51e60fca2409"
+            },
+            "submittedAt": "2026-11-12T20:13:05Z"
+          }
+        ]
       }
     },
     {
@@ -409433,6 +411103,32 @@
           "state": "present"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "relkochta"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9"
+            },
+            "submittedAt": "2026-11-23T15:42:59Z"
+          },
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "4b845306c75b9ad0d09d31cdb86d68dc64171fe9"
+            },
+            "submittedAt": "2026-11-21T09:38:21Z"
+          }
+        ]
       }
     },
     {
@@ -409727,6 +411423,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "be26d2b54dbdc1fd571e2d785d1533904734aa7d",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "milantracy"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "0d46027e654ef56a1f9d2d739358a5200b2da9e5"
+            },
+            "submittedAt": "2026-11-11T06:10:52Z"
+          }
+        ]
       }
     },
     {
@@ -410133,6 +411845,32 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "bc55ab6327453ed38e289b2b1b1f7197b38087e8",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "xinzhong"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "bc55ab6327453ed38e289b2b1b1f7197b38087e8"
+            },
+            "submittedAt": "2026-11-21T04:16:51Z"
+          },
+          {
+            "author": {
+              "login": "rexren-gif"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "bc55ab6327453ed38e289b2b1b1f7197b38087e8"
+            },
+            "submittedAt": "2026-11-18T18:19:17Z"
+          }
+        ]
       }
     },
     {
@@ -410395,6 +412133,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "2f7b3ff295774ee3c72f8cfba8c195fcc89f7fa2",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -410646,6 +412389,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b08bf67a0996f2732d82ad5b35949048cc2139f0",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -411685,6 +413433,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "569667a859101b335098c3650206b2a1d2ed8341",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -412170,6 +413923,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a8328732a975736e1dbada0b81058afd61da268b",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "a8328732a975736e1dbada0b81058afd61da268b"
+            },
+            "submittedAt": "2026-11-27T19:59:15Z"
+          }
+        ]
       }
     },
     {
@@ -412420,6 +414189,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c4098b8d0fdcf02ea31202c40f54a4c774c794fc",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -412685,6 +414459,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "71f5edc4e03898ac8d55bbf385c06f98d217fc71",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -413681,6 +415460,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a6e905cadd2b04651a2e8dd91b223377b91a2ef9",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -413930,6 +415714,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "3adf654e7e15881c2c526487e333ea7ace6cf776",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -414521,6 +416310,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6b0ee962484a8ebe621f3e44ed8c96b522f1c672",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -415876,6 +417670,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f86e554218282050092d90e1bf78b2a52ef5d443",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -417106,6 +418905,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "fffdcea2be08028cad434ce963888381b027914a",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -418152,6 +419956,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e8ae523034538f36932aed11016bcdb7f5935842",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -418614,6 +420423,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "00c5cd11a3952bf965588d48dd19329cb45de332",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "milantracy"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "00c5cd11a3952bf965588d48dd19329cb45de332"
+            },
+            "submittedAt": "2026-11-24T01:50:50Z"
+          }
+        ]
       }
     },
     {
@@ -421680,6 +423505,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "carzh"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "3810f2bbe2a84d9b7e90a4ecf2535e4691874648"
+            },
+            "submittedAt": "2026-11-25T22:31:24Z"
+          }
+        ]
       }
     },
     {
@@ -421930,6 +423771,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f53efaa631df5ccfab6ad6f868205ae7de344cf7",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -422976,6 +424822,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "4ef1c7dd6c58f85305c19070c3f666d903559bb7",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "kerumeto"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "5c8a182619525e77d210a31a9b9ff575251165f3"
+            },
+            "submittedAt": "2026-11-23T18:04:12Z"
+          }
+        ]
       }
     },
     {
@@ -423969,6 +425831,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "29ff39685e49bee9d4144d6301162e359e2ec6c8",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "29ff39685e49bee9d4144d6301162e359e2ec6c8"
+            },
+            "submittedAt": "2026-11-21T02:08:24Z"
+          }
+        ]
       }
     },
     {
@@ -424303,6 +426181,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "329a5acef8c5495f66014b93aab4cf749ba8b61a",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "329a5acef8c5495f66014b93aab4cf749ba8b61a"
+            },
+            "submittedAt": "2026-11-21T10:31:50Z"
+          }
+        ]
       }
     },
     {
@@ -424599,6 +426493,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "3e39c3a0c85601525990460f46d124bb66c927f7",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -424909,6 +426808,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b64c59c1b06d72919b250766609b328d87a05076",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -425541,6 +427445,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "2022728765e5e2a6a436272b09b13e5f04292826",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "2022728765e5e2a6a436272b09b13e5f04292826"
+            },
+            "submittedAt": "2026-11-23T01:38:54Z"
+          }
+        ]
       }
     },
     {
@@ -425927,6 +427847,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "6707b53611b69dfd664366174a41c5d10636e649",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "milantracy"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "8e869b906e5a651a377178f1cf3621a798042397"
+            },
+            "submittedAt": "2026-11-23T10:19:45Z"
+          }
+        ]
       }
     },
     {
@@ -426257,6 +428193,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "57691bada17528444d5137569d164234536009fa",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "milantracy"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "57691bada17528444d5137569d164234536009fa"
+            },
+            "submittedAt": "2026-11-22T09:33:17Z"
+          }
+        ]
       }
     },
     {
@@ -426676,6 +428628,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ayushr2"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "dd4cd790d4915f47e66b03dd02c2c5f8a40e9c6f"
+            },
+            "submittedAt": "2026-11-23T18:50:35Z"
+          }
+        ]
       }
     },
     {
@@ -426972,6 +428940,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "967d146c614ab2c3897fdfb28a42ad96db423a5c",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -427358,6 +429331,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0c7e69e359dbfc284a7d109ad007395086a70cd4",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -427717,6 +429695,32 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "057d0780812983db12df2e41f2b29a0a1a1f79c1",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "057d0780812983db12df2e41f2b29a0a1a1f79c1"
+            },
+            "submittedAt": "2026-11-25T21:57:10Z"
+          },
+          {
+            "author": {
+              "login": "carzh"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "057d0780812983db12df2e41f2b29a0a1a1f79c1"
+            },
+            "submittedAt": "2026-11-23T23:23:50Z"
+          }
+        ]
       }
     },
     {
@@ -428096,6 +430100,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "cafd7c0bb1ba8f37a32facc212e778ac84a1a3df"
+            },
+            "submittedAt": "2026-11-25T21:53:34Z"
+          }
+        ]
       }
     },
     {
@@ -428422,6 +430442,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ea66bb33d6f8130664a38035fdccb1e878a8a5f6",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -428747,6 +430772,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f05f486dc0182b1a9c3e55b33fb3ccde3f0a75b0",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -429154,6 +431184,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "8044063a9a1f7d76cca2656cdbee0310d2bb1266",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "shayonj"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "8044063a9a1f7d76cca2656cdbee0310d2bb1266"
+            },
+            "submittedAt": "2026-11-25T12:53:10Z"
+          }
+        ]
       }
     },
     {
@@ -429495,6 +431541,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "24a0f1e19e4b6a08caf252df986e70ae3f469ab6",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -429886,6 +431937,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "24419d916114737a9d50690a7647c11d9fd66fe9",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "zkoopmans"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "24419d916114737a9d50690a7647c11d9fd66fe9"
+            },
+            "submittedAt": "2026-11-25T21:54:22Z"
+          }
+        ]
       }
     },
     {
@@ -430226,6 +432293,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e17f88ffdd7a4e532f187741a4c58b7b09c109fc",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -430568,6 +432640,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "e0b856220893da40f3f6cb219463d3fcfb0bff97",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -430995,6 +433072,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "8f59a623bf3b1c71fa780cf9f142fe6a2b10ebe6",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "CHANGES_REQUESTED",
+            "commit": {
+              "oid": "b8c204be9daf2ea1132727b9e4b735f818a1ba76"
+            },
+            "submittedAt": "2026-11-26T19:30:10Z"
+          }
+        ]
       }
     },
     {
@@ -431416,6 +433509,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "d4b55cd9df05ea0519a124c00fd31f0f99468ec9"
+            },
+            "submittedAt": "2026-11-26T19:30:53Z"
+          }
+        ]
       }
     },
     {
@@ -431841,6 +433950,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "5ad880c7c7b1b609fa792b121d30cf5964ccbbe4"
+            },
+            "submittedAt": "2026-11-26T19:31:39Z"
+          }
+        ]
       }
     },
     {
@@ -432267,6 +434392,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5a12d3ca8a6d4fc50b8ad149fdae9d5de8d7f4dc",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "EtiennePerot"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "5a12d3ca8a6d4fc50b8ad149fdae9d5de8d7f4dc"
+            },
+            "submittedAt": "2026-11-26T19:34:58Z"
+          }
+        ]
       }
     },
     {
@@ -432636,6 +434777,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "aa1518e26a0c441585ec08f6b4dc482fed20ea30",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -433021,6 +435167,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "db29ac4be27b340ecf7754a35865f55ff460df25",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -433393,6 +435544,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d239129380b0544f13f13cb11b8b46f54cc671f6",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -433764,6 +435920,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "0c9379fb03651b78918b95903651f8900f51139d",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -436048,6 +438209,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "1c8ea1521a8b39fb5e39346367c605ea51706f4b",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -438163,6 +440329,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "8c704d5324518b02f430a3f5f0f9388549c65eab",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -438417,6 +440588,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "8441f4beeb18129b5cfd4416b714f2684d10ea97",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -438702,6 +440878,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "91c8a6b35e7ca4c0af5a2f9c139b246344bf20cf",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -441554,6 +443735,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "f6966cdc4f193bca98a9a49b4ac268bef52aedfe",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -442315,6 +444501,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "a9d228c85448735f5b3ee91b3c1eda4b75ebb8e0",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -443089,6 +445280,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "12d77270681e0a8ce9732a40633f65d1f1d161a9",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -451457,6 +453653,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "89c57ee6988962eca89daeb32e07813981729fe2",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -453114,6 +455315,11 @@
       },
       "inspectedReviewHeads": {
         "PRRC_kwDOORjXAc8AAAABD2l4NA": "fc824d720b6c5228575559b0f3fa2cc889323298"
+      },
+      "reviewOpinions": {
+        "head": "4a6473ccf89a8bd1851b5354eef9a517f951ec86",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -454131,6 +456337,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "d063f629beda6e4add527fafb1c5022c6dc98e3f",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -455948,6 +458159,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "9de063f595a7f0a0140e845bb23c2a0900a64059",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -456051,6 +458267,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "af1089c91c36bfc78719b2836c73d374a66ef092",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -460391,6 +462612,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "2f8840c6402bc2c5db1cef382adbaee1d89cecf7",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "ericsalo"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "2f8840c6402bc2c5db1cef382adbaee1d89cecf7"
+            },
+            "submittedAt": "2026-11-22T23:29:26Z"
+          }
+        ]
       }
     },
     {
@@ -461119,6 +463356,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "b2d9986a40604f82df42c322122ad61313104cfa",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -462355,6 +464597,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "324cf87d3065afb993520a4104720ef7c7647b0b",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -462835,6 +465082,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "ee3f2f309b11fa3d7c9a5f91e23b315ee363895e",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -462938,6 +465190,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5f17b673523e57b344c91c8d8b59b97b5ec2f984",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -463077,6 +465334,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -463191,6 +465453,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -463816,6 +466083,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "c534b7cb8ce6ebcb424527c99bd1213e5f626645",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "fmeum"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "685bcd62bd7bf6a077319f9dd047e2736659663e"
+            },
+            "submittedAt": "2026-11-09T16:38:01Z"
+          }
+        ]
       }
     },
     {
@@ -464960,6 +467243,22 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+        "complete": true,
+        "items": [
+          {
+            "author": {
+              "login": "dzbarsky"
+            },
+            "state": "APPROVED",
+            "commit": {
+              "oid": "3146d6f356a6081f1abd8c741efbfbcc0b9874c0"
+            },
+            "submittedAt": "2026-06-17T20:41:17Z"
+          }
+        ]
       }
     },
     {
@@ -465505,6 +467804,11 @@
           "state": "unknown"
         },
         "description": "Native PR merges do not require an export lookup. Retained export observations are historical."
+      },
+      "reviewOpinions": {
+        "head": "5b5ead6b45008af7553f6c863de2f5463a2d362a",
+        "complete": true,
+        "items": []
       }
     }
   ],
@@ -467809,6 +470113,11 @@
             }
           }
         ]
+      },
+      "reviewOpinions": {
+        "head": "0b64e6b5db4194f69122912579a7f4440f23a0a9",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -467892,6 +470201,11 @@
             }
           }
         ]
+      },
+      "reviewOpinions": {
+        "head": "3cd9a5d970293241934d039506f43ad55384c7fe",
+        "complete": true,
+        "items": []
       }
     },
     {
@@ -467985,6 +470299,11 @@
             }
           }
         ]
+      },
+      "reviewOpinions": {
+        "head": "494f9dcbd23b19acafcf28d79cdd80f49caf35c5",
+        "complete": true,
+        "items": []
       }
     },
     {

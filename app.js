@@ -1543,34 +1543,43 @@ function reviewAgreements(pr) {
       text: gate.description, known: !uncertain };
   }
   // Without the project status, count only demonstrably current approvals.
-  const approvals = currentReviewers(pr).length;
+  const approvals = planningApprovers(pr).filter(login => pr.repo !== "google/gvisor" || pr.maintainerReviewers?.includes(login)).length;
   return { approvals, remaining: Math.max(0, 2 - approvals), known: false,
     text: pr.repo === "google/gvisor" ? "Author credit / project status not recorded; up to two maintainer agreements."
       : "Repository review requirement not recorded; effort estimate assumes two reviews." };
 }
-function currentReviewers(pr) {
-  if (!pr.reviewsComplete || !pr.reviewRequestsComplete || !pr.headHistoryComplete) return [];
-  const cutoffs = [pr.headCommittedAt, pr.headIntroducedAt].filter(value => value != null).map(Date.parse);
-  const cutoff = cutoffs.length && cutoffs.every(Number.isFinite) ? Math.max(...cutoffs) : NaN;
-  if (!Number.isFinite(cutoff)) return [];
+// A surviving native approval is a reason not to ask that person again.
+// Merge-readiness has stricter source/time guards; those guards must not turn
+// an existing agreement into a new review request after a preserved rebase.
+function planningApprovers(pr) {
   const latest = new Map();
   for (const item of pr.feedback?.items || []) {
     const login = item.author?.login?.toLowerCase();
     if (item.kind !== "review" || !login || !["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(item.state)) continue;
     if (!latest.has(login) || item.submittedAt > latest.get(login).submittedAt) latest.set(login, item);
   }
-  return [...latest.values()].filter(item => (pr.repo === "google/gvisor" ? maintainerReview(pr, item)
-    : item.author?.__typename === "User" && ["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)) && item.state === "APPROVED"
-    && item.commit?.oid === pr.head && Date.parse(item.submittedAt) >= cutoff
-    && !(pr.reviewRequests || []).some(request => request.login?.toLowerCase() === item.author.login.toLowerCase()))
-    .map(item => item.author.login.toLowerCase());
+  const opinions = pr.reviewOpinions?.head === pr.head ? pr.reviewOpinions : null;
+  if (opinions?.complete) latest.clear();
+  for (const item of opinions?.items || []) if (item.author?.login) latest.set(item.author.login.toLowerCase(), item);
+  return [...latest.values()].filter(item => item.state === "APPROVED" && item.author?.__typename !== "Bot"
+    && item.author.login.toLowerCase() !== (pr.authorLogin || pr.headOwner || "").toLowerCase()
+    && !explicitRereview(pr, item)).map(item => item.author.login.toLowerCase());
+}
+function explicitRereview(pr, review) {
+  const login = review.author.login.toLowerCase();
+  return (pr.reviewRequests || []).some(request => request.login?.toLowerCase() === login)
+    && (pr.reviewTimeline?.items || []).some(event => event.kind === "request"
+      && event.reviewer?.login?.toLowerCase() === login && event.actor?.__typename === "User"
+      && Date.parse(event.at) > Date.parse(review.submittedAt));
 }
 function reviewCandidates(pr, snapshot) {
-  const approved = new Set(currentReviewers(pr)), author = (pr.authorLogin || pr.headOwner || "").toLowerCase();
+  const approved = new Set(planningApprovers(pr)), author = (pr.authorLogin || pr.headOwner || "").toLowerCase();
   const active = new Set(snapshot?.reviewerActivity?.logins || []), choices = new Map();
   const offer = (login, level, reason, evidence) => {
     login = login?.toLowerCase();
     if (!login || login.endsWith("[bot]") || pr.repo === "google/gvisor" && !active.has(login) || login === author || approved.has(login)) return;
+    if (!(pr.reviewOpinions?.head === pr.head && pr.reviewOpinions.complete) && !pr.reviewsComplete
+        && !(pr.reviewRequests || []).some(request => request.login?.toLowerCase() === login)) return;
     if (!choices.has(login) || level > choices.get(login).level) choices.set(login, { login, level, reason, evidence,
       requested: (pr.reviewRequests || []).some(request => request.login?.toLowerCase() === login) });
   };
@@ -1579,7 +1588,9 @@ function reviewCandidates(pr, snapshot) {
         : item.author?.__typename === "User" && ["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)))
     offer(item.author.login, 3, "Reviewed this PR", item.url);
   for (const item of pr.reviewRequests || []) if (item.login && item.__typename !== "Team")
-    offer(item.login, 4, "Review already requested", pr.url);
+    offer(item.login, 4, (pr.reviewOpinions?.head === pr.head ? pr.reviewOpinions.items : pr.feedback?.items || [])
+      .some(review => review.state === "APPROVED" && review.author?.login?.toLowerCase() === item.login.toLowerCase() && explicitRereview(pr, review))
+      ? "Re-review explicitly requested after approval" : "Review already requested", pr.url);
   if (pr.repo !== "google/gvisor") return [...choices.values()];
   for (const item of snapshot?.reviewerActivity?.authored || []) if (item.paths.some(path => (pr.files || []).includes(path)))
     offer(item.login, 2, "Authored a changed file", item.url);
@@ -3001,6 +3012,12 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
           !Number.isFinite(Date.parse(observation.checkedAt)) || Date.parse(observation.checkedAt) > Date.parse(item.checkedAt))) throw new Error("Invalid mergeability observation");
       if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
           !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
+      const opinions = item.reviewOpinions;
+      if (opinions !== undefined && (!opinions || !/^[a-f0-9]{40}$/.test(opinions.head)
+          || typeof opinions.complete !== "boolean" || !Array.isArray(opinions.items) || opinions.items.length > 100
+          || !opinions.items.every(review => review && typeof review.state === "string"
+            && (review.author == null || typeof review.author.login === "string")
+            && (review.submittedAt == null || Number.isFinite(Date.parse(review.submittedAt)))))) throw new Error("Invalid native review opinions");
       const references = item.crossReferences;
       if (references !== undefined && (!references || typeof references.complete !== "boolean" || !Array.isArray(references.items) ||
           references.items.length > 100 || new Set(references.items.map(event => event?.id)).size !== references.items.length ||

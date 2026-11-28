@@ -2485,8 +2485,10 @@ class ScopedApprovalTest(unittest.TestCase):
                   "author": {"login": "reviewer", "__typename": "User"},
                   "commit": {"oid": pr["headRefOid"]}}
         pr["reviews"]["nodes"] = [review]
+        pr["latestOpinionatedReviews"] = {"pageInfo": {"hasNextPage": False}, "nodes": [review]}
 
         def graphql(query: str) -> dict:
+            self.assertIn("latestOpinionatedReviews(first:100)", query)
             response = copy.deepcopy(pr)
             # Return only requested history, as the service does. A detail-only
             # query must still retrieve the evidence used to judge approval.
@@ -2502,6 +2504,7 @@ class ScopedApprovalTest(unittest.TestCase):
                     self.assertEqual(result["headHistoryComplete"], True)
                     self.assertEqual(result["headIntroducedAt"], LATER)
                     self.assertEqual(result["reviewDecision"], expected)
+                    self.assertEqual(result["reviewOpinions"], {"head": pr["headRefOid"], "complete": True, "items": [review]})
 
 
 class ProviderStatusTest(unittest.TestCase):

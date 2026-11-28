@@ -91,6 +91,9 @@ comments(last:100) { pageInfo { hasPreviousPage } nodes {
 reviews(last:100) { pageInfo { hasPreviousPage } nodes {
   id url body state submittedAt updatedAt authorAssociation author { login __typename } commit { oid }
 } }
+latestOpinionatedReviews(first:100) { pageInfo { hasNextPage } nodes {
+  state submittedAt author { login __typename } commit { oid }
+} }
 reviewDismissals:timelineItems(last:100,itemTypes:[REVIEW_DISMISSED_EVENT]) {
   pageInfo { hasPreviousPage }
   nodes { ... on ReviewDismissedEvent { id createdAt previousReviewState review { id } } }
@@ -774,6 +777,10 @@ def normalize(pr: dict, previous: dict | None = None) -> dict:
                        "actor": e["actor"], "reviewer": e.get("requestedReviewer")} for e in timeline["nodes"]]}
         normalized["files"] = [f["path"] for f in pr["files"]["nodes"]]
         normalized["filesComplete"] = not pr["files"]["pageInfo"]["hasNextPage"]
+    if (opinions := pr.get("latestOpinionatedReviews")) is not None:
+        normalized["reviewOpinions"] = {"head": pr["headRefOid"],
+                                        "complete": not opinions["pageInfo"]["hasNextPage"],
+                                        "items": opinions["nodes"]}
     for field in ("additions", "deletions", "changedFiles"):
         if field in pr:
             normalized[field] = pr[field]

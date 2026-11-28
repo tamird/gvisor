@@ -4069,26 +4069,37 @@ test('review planning uses the head project gate including author credit', () =>
   assert.equal(count().remaining, 1);
 });
 
-test('review suggestions exclude author and effective approvers and mark pending requests', () => {
-  const c = client(), head = 'a'.repeat(40);
+test('review suggestions preserve native approvals independently of merge readiness', () => {
+  const c = client(), head = 'b2b018bfebc6ecd5e1f7e4b8dd32ad66d0b6e8b3';
   c.pr = { repo: 'google/gvisor', authorLogin: 'writer', head, reviewsComplete: true,
     reviewRequestsComplete: true, headHistoryComplete: true, headCommittedAt: '2026-11-28T10:00:00Z',
-    headIntroducedAt: '2026-11-28T10:01:00Z', maintainerReviewers: ['approved'],
-    feedback: { items: [{ kind: 'review', state: 'APPROVED', author: { __typename: 'User', login: 'approved' },
+    headIntroducedAt: '2026-11-28T10:01:00Z', maintainerReviewers: ['zkoopmans'],
+    feedback: { items: [{ kind: 'review', state: 'APPROVED', author: { __typename: 'User', login: 'zkoopmans' },
       submittedAt: '2026-11-28T10:02:00Z', commit: { oid: head } }] },
     files: ['pkg/foo/foo.go'], filesComplete: true, reviewRequests: [{ login: 'requested' }] };
-  c.snapshot = { reviewerActivity: { logins: ['approved', 'writer', 'requested', 'other'] },
-    reviewerSpecialties: { 'pkg/foo': ['approved', 'writer', 'requested', 'other'] } };
+  c.snapshot = { reviewerActivity: { logins: ['zkoopmans', 'writer', 'requested', 'other'] },
+    reviewerSpecialties: { 'pkg/foo': ['zkoopmans', 'writer', 'requested', 'other'] } };
   const candidates = () => vm.runInContext('reviewCandidates(pr, snapshot)', c);
   assert.deepEqual(Array.from(candidates(), x => x.login), ['requested', 'other']);
   assert.equal(candidates()[0].requested, true);
+  // #16962: native approval survives reassociation to a head pushed later.
+  c.pr.feedback.items[0].submittedAt = '2026-11-25T20:05:23Z';
+  c.pr.headCommittedAt = '2026-11-25T21:11:01Z';
+  c.pr.headIntroducedAt = '2026-11-25T23:51:51Z';
+  assert.ok(!candidates().some(x => x.login === 'zkoopmans'));
   c.pr.feedback.items[0].commit.oid = 'b'.repeat(40);
-  assert.ok(candidates().some(x => x.login === 'approved'));
+  assert.ok(!candidates().some(x => x.login === 'zkoopmans'));
   c.pr.filesComplete = false;
   assert.ok(candidates().some(x => x.login === "requested"));
   delete c.pr.headIntroducedAt;
   c.pr.feedback.items[0].commit.oid = head;
-  assert.ok(!candidates().some(x => x.login === "approved"));
+  assert.ok(!candidates().some(x => x.login === "zkoopmans"));
+  c.pr.reviewRequests.push({ login: 'zkoopmans' });
+  c.pr.reviewTimeline = { items: [{ kind: 'request', reviewer: { login: 'zkoopmans' },
+    actor: { __typename: 'User', login: 'writer' }, at: '2026-11-26T10:00:00Z' }] };
+  assert.ok(candidates().some(x => x.login === 'zkoopmans' && x.requested));
+  c.pr.reviewTimeline.items = [];
+  assert.ok(!candidates().some(x => x.login === 'zkoopmans'));
 });
 
 test('review ranking rewards smaller diffs, remaining approvals and active dependencies', () => {
