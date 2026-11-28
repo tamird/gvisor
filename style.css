@@ -59,3 +59,15 @@
 .draft-markdown img { max-width: 100%; height: auto; }
 #draft-source { display: inline-block; margin-top: 1rem; }
 #draft-source[hidden] { display: none; }
+
+.review-plans { padding: 1rem; overflow: auto; }
+.review-plans > p, .review-plans > details { max-width: 85ch; }
+.review-plans table { width: 100%; min-width: 850px; }
+.review-plans td { vertical-align: top; }
+.review-plans td:first-child { min-width: 240px; }
+.review-plans td:first-child > button { display: block; margin-top: .5rem; }
+.review-candidate { margin: 0 0 .6rem; }
+.review-candidate > a { display: block; font-size: .8rem; }
+#review-copy { width: 100%; max-width: 90ch; box-sizing: border-box; white-space: pre; font: .9rem/1.8 monospace; user-select: text; }
+#review-copy-control { margin-bottom: 1rem; }
+#review-copy-control > label { display: block; margin: .6rem 0; }

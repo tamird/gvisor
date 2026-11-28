@@ -8,9 +8,9 @@
   <meta name="description" content="Track gVisor and BuildBuddy reviews, checks and dependencies, with branchless investigations and their findings.">
   <title>gVisor + BuildBuddy · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=20261112-draft">
+  <link rel="stylesheet" href="style.css?v=20261128-reviews">
   <script src="draft.js?v=20261112-draft" defer></script>
-  <script src="app.js?v=20261112-draft" defer></script>
+  <script src="app.js?v=20261128-reviews" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -22,7 +22,7 @@
   <main id="workspace">
     <p id="outreach-pause" class="notice" hidden></p>
     <div class="toolbar">
-      <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true" aria-controls="dag-pane">Dependency DAG</button><button id="table-view" aria-pressed="false" aria-controls="table-pane">Table</button><button id="investigations-view" aria-pressed="false" aria-controls="investigations-pane">Investigations</button></div>
+      <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true" aria-controls="dag-pane">Dependency DAG</button><button id="table-view" aria-pressed="false" aria-controls="table-pane">Table</button><button id="reviews-view" aria-pressed="false" aria-controls="reviews-pane">Review planning</button><button id="investigations-view" aria-pressed="false" aria-controls="investigations-pane">Investigations</button></div>
       <a href="?view=investigations&amp;q=CI+flakes#investigation%3Aci-flakes">CI flakes</a>
       <label class="search"><span class="sr-only">Search work</span><input id="search" type="search" placeholder="Search title, PR #, or branch" autocomplete="off"><kbd>/</kbd></label>
       <label id="investigation-search-control" class="search" hidden><span class="sr-only">Search investigations</span><input id="investigation-search" type="search" placeholder="Search investigations and findings" autocomplete="off"><kbd>/</kbd></label>
@@ -65,6 +65,15 @@
             <th scope="col">Import · own checks</th>
             <th scope="col" aria-sort="none"><button data-sort="group">Workstream</button></th>
           </tr></thead><tbody></tbody></table>
+        </section>
+        <section id="reviews-pane" class="table-pane review-plans" aria-label="Review value and effort" hidden>
+          <h2>Where will a review help most?</h2>
+          <p>Ranked by estimated value per review effort. Every PR has value; active dependent PRs and explicit priority/regression labels add weight. Effort uses diff size, changed-file count and remaining maintainer agreements. This is a planning estimate, not a measure of engineering benefit or review time.</p>
+          <details><summary>How ranking and approvals work</summary><p>Value = 1 + active downstream PRs + 2 for an explicit P0, P1, critical or regression label. Effort = √(changed files + changed lines / 50) × remaining reviews (minimum 1). Missing diff sizes sort last. The head’s maintainer-approval status supplies the two-agreement rule and any eligible author credit; without it the review count is an estimate. Satisfied gates need merge/import follow-up, not another reviewer.</p><p>Reviewer suggestions use existing project specializations, prior reviews of this PR and authorship of changed files. They are evidence of fit, not a promise of availability. No requests are sent by this view.</p></details>
+          <label>Reviewer <select id="reviewer-filter"><option value="">All reviewers</option></select></label>
+          <p id="review-plan-count"></p>
+          <div id="review-copy-control" hidden><label><input id="review-include-requested" type="checkbox"> Include already-requested reviews for follow-up</label><label for="review-copy">PR links to copy</label><p id="review-copy-note"></p><textarea id="review-copy" readonly spellcheck="false" rows="6"></textarea></div>
+          <table><thead><tr><th scope="col">PR</th><th scope="col">Value / effort</th><th scope="col">Remaining review work</th><th scope="col">Suggested reviewers</th></tr></thead><tbody id="review-plan-body"></tbody></table>
         </section>
         <section id="investigations-pane" class="investigations-pane" aria-label="Investigations and findings" hidden>
           <p class="investigation-intro">Research and tasks can start before a Git branch exists. Use Show history for concluded investigations; direct links always remain available.</p>

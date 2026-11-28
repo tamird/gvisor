@@ -71,7 +71,7 @@ commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
 } } } }
 """
 FIELDS = """
-number title url state isDraft headRefName headRefOid headRef { name target { oid } } baseRefOid baseRef { name target { oid } } updatedAt createdAt mergedAt closedAt mergeCommit { oid }
+number title url state isDraft additions deletions changedFiles headRefName headRefOid headRef { name target { oid } } baseRefOid baseRef { name target { oid } } updatedAt createdAt mergedAt closedAt mergeCommit { oid }
 headRepository { nameWithOwner owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
@@ -774,6 +774,9 @@ def normalize(pr: dict, previous: dict | None = None) -> dict:
                        "actor": e["actor"], "reviewer": e.get("requestedReviewer")} for e in timeline["nodes"]]}
         normalized["files"] = [f["path"] for f in pr["files"]["nodes"]]
         normalized["filesComplete"] = not pr["files"]["pageInfo"]["hasNextPage"]
+    for field in ("additions", "deletions", "changedFiles"):
+        if field in pr:
+            normalized[field] = pr[field]
     return with_review_decision(normalized)
 
 

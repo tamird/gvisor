@@ -4046,3 +4046,66 @@ test('details expose current source-bound actions before curated history', () =>
   node.status = 'retired';
   assert.equal(render(), undefined);
 });
+
+test('review planning uses the head project gate including author credit', () => {
+  const c = client();
+  c.pr = { repo: 'google/gvisor', checks: { contexts: [{ kind: 'status', name: 'maintainer-approval/master',
+    state: 'PENDING', url: 'https://github.com/gvisor/gvisor/actions/runs/123',
+    description: 'Maintainer approvals: 1, needs 2.' }] } };
+  const count = () => vm.runInContext('reviewAgreements(pr)', c);
+  assert.equal(count().remaining, 1);
+  c.pr.checks.contexts[0].description = 'Maintainer approvals: 0, needs 1 (the author is a maintainer).';
+  assert.equal(count().remaining, 1);
+  c.pr.checks.contexts[0].description = 'Maintainer approvals: 1, needs 1 (the author is a maintainer).';
+  c.pr.checks.contexts[0].state = 'SUCCESS';
+  assert.equal(count().remaining, 0);
+  c.pr.checks.contexts[0].description = "#17836: Maintainer approvals: 1, needs 1 (the author is a maintainer).";
+  assert.equal(count().remaining, 0);
+  c.pr.checks.contexts[0].description = 'Maintainer approvals: 0, needs 1 (2 if the author did not push the head commit).';
+  c.pr.checks.contexts[0].state = 'PENDING';
+  assert.equal(count().known, false);
+  assert.equal(count().upper, 2);
+  c.pr.checks.contexts[0].description = "Maintainer approvals: 1, needs 1 (2 if the author did not push the head commit).";
+  assert.equal(count().remaining, 1);
+});
+
+test('review suggestions exclude author and effective approvers and mark pending requests', () => {
+  const c = client(), head = 'a'.repeat(40);
+  c.pr = { repo: 'google/gvisor', authorLogin: 'writer', head, reviewsComplete: true,
+    reviewRequestsComplete: true, headHistoryComplete: true, headCommittedAt: '2026-11-28T10:00:00Z',
+    headIntroducedAt: '2026-11-28T10:01:00Z', maintainerReviewers: ['approved'],
+    feedback: { items: [{ kind: 'review', state: 'APPROVED', author: { __typename: 'User', login: 'approved' },
+      submittedAt: '2026-11-28T10:02:00Z', commit: { oid: head } }] },
+    files: ['pkg/foo/foo.go'], filesComplete: true, reviewRequests: [{ login: 'requested' }] };
+  c.snapshot = { reviewerActivity: { logins: ['approved', 'writer', 'requested', 'other'] },
+    reviewerSpecialties: { 'pkg/foo': ['approved', 'writer', 'requested', 'other'] } };
+  const candidates = () => vm.runInContext('reviewCandidates(pr, snapshot)', c);
+  assert.deepEqual(Array.from(candidates(), x => x.login), ['requested', 'other']);
+  assert.equal(candidates()[0].requested, true);
+  c.pr.feedback.items[0].commit.oid = 'b'.repeat(40);
+  assert.ok(candidates().some(x => x.login === 'approved'));
+  c.pr.filesComplete = false;
+  assert.ok(candidates().some(x => x.login === "requested"));
+  delete c.pr.headIntroducedAt;
+  c.pr.feedback.items[0].commit.oid = head;
+  assert.ok(!candidates().some(x => x.login === "approved"));
+});
+
+test('review ranking rewards smaller diffs, remaining approvals and active dependencies', () => {
+  const c = client();
+  c.nodes = [1, 2, 3].map(number => ({ id: `pr:${number}`, type: 'pr', number,
+    github: { repo: 'google/gvisor', changedFiles: 2, additions: 20, deletions: 10,
+      checks: { contexts: [{ kind: 'status', name: 'maintainer-approval/master', state: 'PENDING',
+        url: 'https://github.com/gvisor/gvisor/actions/runs/123', description: 'Maintainer approvals: 0, needs 2.' }] } } }));
+  vm.runInContext('model = { nodes, edges: [] }; impact = () => ({ prs: 0 })', c);
+  const score = n => { c.n = n; return vm.runInContext('reviewPlan(nodes[n], {})', c); };
+  c.nodes[1].github.additions = 2000;
+  assert.ok(score(0).score > score(1).score);
+  c.nodes[1].github = JSON.parse(JSON.stringify(c.nodes[0].github));
+  c.nodes[1].github.checks.contexts[0].description = 'Maintainer approvals: 1, needs 2.';
+  assert.ok(score(1).score > score(0).score);
+  delete c.nodes[2].github.additions;
+  assert.equal(score(2).score, null);
+  vm.runInContext('impact = id => ({ prs: id === "pr:1" ? 3 : 0 })', c);
+  assert.equal(score(0).value, 4);
+});

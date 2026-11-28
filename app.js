@@ -5,7 +5,8 @@ const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
 const UI_KEY = "gvisor-work-map-view-v1";
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
-const VIEWS = ["dag", "table", "investigations"];
+const VIEWS = ["dag", "table", "reviews", "investigations"];
+let reviewerFilter = "";
 const SORT_KEYS = ["number", "title", "impact", "direct", "age", "review", "checks", "group"];
 const STATE_LABELS = { "author-feedback": "Agent: review follow-up", "contributor-review": "Contributor input", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting public export", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
@@ -1410,7 +1411,7 @@ function stateAge(node) {
   const records = Object.entries(states(node)).filter(([state, record]) => record.basis !== "unknown" && (!stateFilters.size || stateFilters.has(state)));
   return records.length ? Math.max(...records.map(([, record]) => Date.parse(record.observedAt || model.checkedAt) - Date.parse(record.since))) : -1;
 }
-const URL_FIELDS = ["view", "state", "reason", "group-by", "sort", "order", "q", "group", "history", "resolved", "focus", "investigation-status"];
+const URL_FIELDS = ["view", "state", "reason", "group-by", "sort", "order", "q", "group", "history", "resolved", "focus", "investigation-status", "reviewer"];
 function selectedFromURL() {
   try { return decodeURIComponent(location.hash.slice(1)) || null; } catch { return null; }
 }
@@ -1418,6 +1419,7 @@ function currentViewURL(selection = selected) {
   const url = new URL(location.href); url.search = "";
   url.searchParams.set("view", view);
   if ($("show-resolved").checked) url.searchParams.set("history", "1");
+  if (view === "reviews" && reviewerFilter) url.searchParams.set("reviewer", reviewerFilter);
   if (view === "investigations") {
     if ($("investigation-search").value) url.searchParams.set("q", $("investigation-search").value);
     if ($("investigation-filter").value) url.searchParams.set("investigation-status", $("investigation-filter").value);
@@ -1444,13 +1446,14 @@ function readViewURL() {
     tableGrouping: params.get("view") === "handoff" || params.get("group-by") === "attention",
     reasonFilters: params.getAll("reason"), sortKey: params.get("sort") || "impact", sortDirection: params.get("order") === "asc" ? 1 : -1,
     stateFilters: params.getAll("state"), search: params.get("q") || "", group: params.get("group") || "",
-    investigationStatus: params.get("investigation-status") || "",
+    investigationStatus: params.get("investigation-status") || "", reviewer: params.get("reviewer") || "",
     history: params.get("history") === "1" || params.get("resolved") === "1" ||
       !params.has("history") && params.get("view") === "investigations" && params.get("investigation-status") === "concluded", selected: selectedFromURL(), focus: params.get("focus") || null };
 }
 function applyView(saved) {
   view = saved.view === "handoff" ? "table" : VIEWS.includes(saved.view) ? saved.view : "dag";
   tableGrouping = saved.view === "handoff" || saved.tableGrouping === true;
+  reviewerFilter = typeof saved.reviewer === "string" ? saved.reviewer : "";
   // Older links and saved views used one filter for all contributor decisions.
   const reasons = (Array.isArray(saved.reasonFilters) ? saved.reasonFilters : []).flatMap(id => id === "author-proposal" ? DECISION_REASONS.map(reason => reason.id) : [id]);
   reasonFilters = new Set(reasons.filter(id => QUEUE_FILTERS.includes(id) || ATTENTION_REASONS.some(reason => reason.id === id)));
@@ -1484,7 +1487,7 @@ function syncViewURL(navigation) {
 }
 function saveView() {
   if (initializing) return;
-  try { localStorage.setItem(UI_KEY, JSON.stringify({ url: currentViewURL(), view, tableGrouping, reasonFilters: [...reasonFilters], stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
+  try { localStorage.setItem(UI_KEY, JSON.stringify({ url: currentViewURL(), view, reviewer: reviewerFilter, tableGrouping, reasonFilters: [...reasonFilters], stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
     search: view === "investigations" ? $("investigation-search").value : $("search").value,
     workSearch: $("search").value, investigationSearch: $("investigation-search").value, investigationStatus: $("investigation-filter").value,
     group: $("group-filter").value, history: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
@@ -1523,6 +1526,123 @@ function buildkiteFailureLabel(row) {
   if (row.failedState === "timed_out") return "Timed out";
   if (row.failedState === "expired") return "Expired";
   return row.exitCode == null ? "Failed" : `Exit ${row.exitCode}`;
+}
+
+// Agreement counts come from the head-bound project status, including author
+// credit. GitHub's one-review branch rule alone is not the project policy.
+function reviewAgreements(pr) {
+  const gate = (pr.checks?.contexts || []).find(check => check.kind === "status"
+    && check.name === "maintainer-approval/master"
+    && /^https:\/\/github\.com\/gvisor\/gvisor\/actions\/runs\/\d+$/.test(check.url || ""));
+  const match = /^(?:#\d+: )?Maintainer approvals: (\d+), needs ([12])(?:[ .(])/.exec(gate?.description || "");
+  if (pr.repo === "google/gvisor" && match) {
+    const approvals = Number(match[1]), needed = Number(match[2]);
+    const uncertain = /if the author/.test(gate.description);
+    return { approvals, remaining: gate.state === "SUCCESS" ? 0 : Math.max(1, needed - approvals),
+      upper: uncertain ? Math.max(0, 2 - approvals) : null, evidence: gate.url,
+      text: gate.description, known: !uncertain };
+  }
+  // Without the project status, count only demonstrably current approvals.
+  const approvals = currentReviewers(pr).length;
+  return { approvals, remaining: Math.max(0, 2 - approvals), known: false,
+    text: pr.repo === "google/gvisor" ? "Author credit / project status not recorded; up to two maintainer agreements."
+      : "Repository review requirement not recorded; effort estimate assumes two reviews." };
+}
+function currentReviewers(pr) {
+  if (!pr.reviewsComplete || !pr.reviewRequestsComplete || !pr.headHistoryComplete) return [];
+  const cutoffs = [pr.headCommittedAt, pr.headIntroducedAt].filter(value => value != null).map(Date.parse);
+  const cutoff = cutoffs.length && cutoffs.every(Number.isFinite) ? Math.max(...cutoffs) : NaN;
+  if (!Number.isFinite(cutoff)) return [];
+  const latest = new Map();
+  for (const item of pr.feedback?.items || []) {
+    const login = item.author?.login?.toLowerCase();
+    if (item.kind !== "review" || !login || !["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(item.state)) continue;
+    if (!latest.has(login) || item.submittedAt > latest.get(login).submittedAt) latest.set(login, item);
+  }
+  return [...latest.values()].filter(item => (pr.repo === "google/gvisor" ? maintainerReview(pr, item)
+    : item.author?.__typename === "User" && ["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)) && item.state === "APPROVED"
+    && item.commit?.oid === pr.head && Date.parse(item.submittedAt) >= cutoff
+    && !(pr.reviewRequests || []).some(request => request.login?.toLowerCase() === item.author.login.toLowerCase()))
+    .map(item => item.author.login.toLowerCase());
+}
+function reviewCandidates(pr, snapshot) {
+  const approved = new Set(currentReviewers(pr)), author = (pr.authorLogin || pr.headOwner || "").toLowerCase();
+  const active = new Set(snapshot?.reviewerActivity?.logins || []), choices = new Map();
+  const offer = (login, level, reason, evidence) => {
+    login = login?.toLowerCase();
+    if (!login || login.endsWith("[bot]") || pr.repo === "google/gvisor" && !active.has(login) || login === author || approved.has(login)) return;
+    if (!choices.has(login) || level > choices.get(login).level) choices.set(login, { login, level, reason, evidence,
+      requested: (pr.reviewRequests || []).some(request => request.login?.toLowerCase() === login) });
+  };
+  for (const item of pr.feedback?.items || []) if (item.kind === "review"
+      && (pr.repo === "google/gvisor" ? maintainerReview(pr, item)
+        : item.author?.__typename === "User" && ["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)))
+    offer(item.author.login, 3, "Reviewed this PR", item.url);
+  for (const item of pr.reviewRequests || []) if (item.login && item.__typename !== "Team")
+    offer(item.login, 4, "Review already requested", pr.url);
+  if (pr.repo !== "google/gvisor") return [...choices.values()];
+  for (const item of snapshot?.reviewerActivity?.authored || []) if (item.paths.some(path => (pr.files || []).includes(path)))
+    offer(item.login, 2, "Authored a changed file", item.url);
+  for (const [path, people] of Object.entries(snapshot?.reviewerSpecialties || {})) if ((pr.files || []).some(file => file === path || file.startsWith(path + "/")))
+    for (const login of people) offer(login, 1, `Maintainer for ${path}/`, "https://github.com/gvisor/gvisor/blob/master/governance/areas.yaml");
+  return [...choices.values()].sort((a, b) => b.level - a.level || Number(b.requested) - Number(a.requested) || a.login.localeCompare(b.login));
+}
+function reviewPlan(node, snapshot) {
+  const pr = node.github, agreements = reviewAgreements(pr), downstream = impact(node.id).prs;
+  const labels = (pr.labels || []).map(label => typeof label === "string" ? label : label.name);
+  const urgent = labels.filter(label => /(?:^|[:/ -])(?:p[01]|critical|regression)(?:$|[:/ -])/i.test(label));
+  const value = 1 + downstream + (urgent.length ? 2 : 0);
+  const files = Number.isInteger(pr.changedFiles) ? pr.changedFiles : pr.filesComplete && Array.isArray(pr.files) ? pr.files.length : null;
+  const lines = Number.isInteger(pr.additions) && Number.isInteger(pr.deletions) ? pr.additions + pr.deletions : null;
+  const effort = files === null || lines === null ? null : Math.sqrt(Math.max(1, files + lines / 50)) * Math.max(1, agreements.upper ?? agreements.remaining);
+  return { node, agreements, downstream, urgent, files, value, effort,
+    lines, score: effort === null ? null : value / effort, candidates: agreements.remaining ? reviewCandidates(pr, snapshot) : [] };
+}
+function reviewPlans() {
+  return model.nodes.filter(node => node.type === "pr" && node.github?.status === "open" && matchesBase(node)
+    && primaryAttention(attentionReasons(node, registry.meta.owner))?.owner === "maintainer")
+    .map(node => reviewPlan(node, liveSnapshot)).sort((a, b) => Number(a.agreements.remaining === 0) - Number(b.agreements.remaining === 0)
+      || (b.score ?? -1) - (a.score ?? -1)
+      || a.node.number - b.node.number);
+}
+function drawReviewPlans() {
+  const plans = reviewPlans(), chooser = $("reviewer-filter");
+  const counts = new Map();
+  for (const plan of plans) for (const person of plan.candidates) counts.set(person.login, (counts.get(person.login) || 0) + 1);
+  chooser.replaceChildren(new Option("All reviewers", ""));
+  for (const [login, count] of [...counts].sort(([a], [b]) => a.localeCompare(b))) chooser.add(new Option(`@${login} · ${count} PRs`, login));
+  if (!counts.has(reviewerFilter)) reviewerFilter = "";
+  chooser.value = reviewerFilter;
+  const shown = reviewerFilter ? plans.filter(plan => plan.candidates.some(person => person.login === reviewerFilter)) : plans;
+  const copyable = shown.filter(plan => reviewerFilter && ($("review-include-requested").checked || !plan.candidates.find(person => person.login === reviewerFilter).requested)
+    && !activeReviewHold(plan.node, plan.node.github));
+  $("review-copy-control").hidden = !reviewerFilter;
+  $("review-copy").value = copyable.map(plan => plan.node.url).join("\n");
+  $("review-copy").rows = Math.min(12, Math.max(3, copyable.length));
+  $("review-copy-note").textContent = `${copyable.length} PRs for @${reviewerFilter}. ${$("review-include-requested").checked ? "Already-requested reviews included for follow-up." : "Already-requested reviews omitted."} Explicitly held requests are omitted. Drag to select any consecutive lines, then copy.`;
+  const body = $("review-plan-body"); body.replaceChildren();
+  for (const plan of shown) {
+    const { node, agreements } = plan, tr = element("tr"); tr.dataset.node = node.id;
+    const name = element("td"); name.append(link(`${label(node)} · ${node.title}`, node.url),
+      button("Details", () => select(node.id), "subtle"));
+    const value = element("td", "", `${plan.value} value / ${plan.effort?.toFixed(1) || "?"} effort`);
+    value.append(element("p", "detail-meta", `One PR + ${plan.downstream} active dependent PRs${plan.urgent.length ? " + priority: " + plan.urgent.join(", ") : ""}`));
+    const effort = element("td", "", `${agreements.approvals} current approvals · ${agreements.remaining}${agreements.upper === null || agreements.upper === undefined || agreements.upper === agreements.remaining ? "" : "–" + agreements.upper} more${agreements.known ? "" : " (estimate)"}`);
+    effort.append(element("p", "detail-meta", `${plan.files ?? "Unknown"} files · ${plan.lines ?? "unknown"} lines changed. ${agreements.text}`));
+    if (agreements.evidence) effort.append(link("Head approval status", agreements.evidence));
+    const people = element("td");
+    if (!agreements.remaining) people.append(element("p", "", "Agreement gate satisfied; follow up on merge / import, not another review."));
+    else if (!plan.candidates.length) people.append(element("p", "", "No evidenced reviewer match in this snapshot."));
+    for (const person of plan.candidates) {
+      const row = element("p", "review-candidate");
+      row.append(button(`@${person.login}`, () => { reviewerFilter = person.login; render(false, "push"); }, "subtle"),
+        element("span", "", person.requested ? " · already requested" : ""), link(person.reason, person.evidence)); people.append(row);
+    }
+    if (activeReviewHold(node, node.github)) people.append(element("p", "notice", "Review outreach is explicitly held."));
+    tr.append(name, value, effort, people); body.append(tr);
+  }
+  $("review-plan-count").textContent = `${shown.length} of ${plans.length} maintainer-attention PRs${reviewerFilter ? " · @" + reviewerFilter : ""}`;
+  return shown.map(plan => plan.node);
 }
 
 function tableNodes() { return model.nodes.filter((node) => matches(node) && visibleHistory(node)); }
@@ -2236,13 +2356,13 @@ function render(reposition = false, navigation = "replace") {
   }
   invalidateHandoffCopy();
   const dag = view === "dag", investigations = view === "investigations";
-  $("dag-pane").hidden = !dag; $("table-pane").hidden = view !== "table"; $("investigations-pane").hidden = !investigations;
+  $("dag-pane").hidden = !dag; $("table-pane").hidden = view !== "table"; $("investigations-pane").hidden = !investigations; $("reviews-pane").hidden = view !== "reviews";
   for (const choice of VIEWS) $(`${choice}-view`).setAttribute("aria-pressed", view === choice);
   document.body.classList.toggle("investigation-mode", investigations);
   $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations;
-  $("work-state-controls").hidden = investigations; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
+  $("work-state-controls").hidden = investigations || view === "reviews"; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
   $("chain-control").hidden = !dag; $("group-by-attention").checked = tableGrouping;
-  const nodes = investigations ? drawInvestigations() : dag ? graphNodes() : tableNodes();
+  const nodes = investigations ? drawInvestigations() : view === "reviews" ? drawReviewPlans() : dag ? graphNodes() : tableNodes();
   $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : `${nodes.length} items${dag ? " · prerequisite → dependent" : " · click a title for relationships"}`;
   const historyNote = $("show-resolved").checked ? "Including history" : "Inactive history hidden; direct links remain available";
   const queue = Object.keys(ATTENTION_OWNERS).find(owner => reasonFilters.has("queue-" + owner));
@@ -3020,7 +3140,7 @@ function resetFilters(redraw = true) {
     $("investigation-search").value = ""; $("investigation-filter").value = ""; selected = null;
     if (redraw) render(false, "push"); return;
   }
-  $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null; stateFilters.clear(); reasonFilters.clear();
+  $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null; reviewerFilter = ""; stateFilters.clear(); reasonFilters.clear();
   if (redraw) render(true, "push");
 }
 function initialize() {
@@ -3047,6 +3167,10 @@ function initialize() {
       });
       label.append(input, element("span", "", reason.title)); options.append(label);
     }
+    if (owner === "maintainer") {
+      const ranked = link("Rank by value / review effort", "https://tamird.github.io/gvisor/?view=reviews");
+      ranked.target = "_self"; options.prepend(ranked);
+    }
     chooser.append(options); $("state-filters").append(chooser);
   }
   const countsNote = element("span", "notice", "Queue counts incomplete until a matching GitHub snapshot is available.");
@@ -3065,6 +3189,8 @@ function initialize() {
     }
     render(true, "push");
   });
+  $("review-include-requested").addEventListener("change", () => render());
+  $("reviewer-filter").addEventListener("change", () => { reviewerFilter = $("reviewer-filter").value; render(false, "push"); });
   $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; render(true, "push"); });
   for (const next of VIEWS) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
