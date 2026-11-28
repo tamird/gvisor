@@ -2,6 +2,23 @@ set -euo pipefail
 
 source .buildkite/hooks/libhook
 
+# An updated PR can supersede a webhook build while it waits for an agent.
+# Check once before uploading the test jobs. Explicit rebuilds can test old commits.
+if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == first-pass &&
+      "${BUILDKITE_SOURCE:-}" == webhook &&
+      -z "${BUILDKITE_REBUILT_FROM_BUILD_ID:-}" &&
+      "${BUILDKITE_PULL_REQUEST:-}" =~ ^[1-9][0-9]*$ &&
+      "${BUILDKITE_COMMIT:-}" =~ ^[0-9a-f]{40}$ &&
+      "${BUILDKITE_COMMAND:-}" == *"pipeline upload"* ]]; then
+  ref="refs/pull/${BUILDKITE_PULL_REQUEST}/head"
+  if head="$(timeout 10s git ls-remote --exit-code origin "$ref")" &&
+      [[ "$head" =~ ^([0-9a-f]{40})[[:space:]] && "${BASH_REMATCH[1]}" != "$BUILDKITE_COMMIT" ]]; then
+    echo "Canceling superseded First Pass build for PR #${BUILDKITE_PULL_REQUEST}."
+    buildkite-agent build cancel
+    exit 1  # Prevent upload while Buildkite delivers the cancellation.
+  fi
+fi
+
 # Track job assignment and initialize completion time if this is the first job.
 JOB_ASSIGNED_FILE="/tmp/job_assigned"
 touch "${JOB_ASSIGNED_FILE}"
